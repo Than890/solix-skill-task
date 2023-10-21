@@ -1,0 +1,138 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mysql"
+    url      = env("DATABASE_URL")
+}
+
+enum DiscountType {
+    no
+    percent
+    amount
+}
+
+model User {
+    id           String       @id @unique @default(uuid()) @map("id") @db.VarChar(36)
+    name         String       @db.VarChar(50)
+    phone        String       @unique @db.VarChar(13)
+    username     String       @unique @db.VarChar(16)
+    password     String       @db.VarChar(100)
+    email        String       @db.VarChar(100)
+    address      String       @db.VarChar(255)
+    sales        Sale[]
+    sale_records SaleRecord[]
+
+    created_at DateTime     @default(now())
+    updated_at DateTime     @default(now())
+    SaleDetail SaleDetail[]
+
+    @@map("user")
+}
+
+model BookCategory {
+    id          String @id @unique @default(uuid()) @map("id") @db.VarChar(36)
+    name        String @db.VarChar(100)
+    description String @db.VarChar(255)
+
+    books Book[]
+
+    created_at DateTime @default(now())
+    updated_at DateTime @default(now())
+
+    @@map("book_category")
+}
+
+model Book {
+    id               String       @id @unique @default(uuid()) @map("id") @db.VarChar(36)
+    book_category_id String       @db.VarChar(36)
+    bookcategory     BookCategory @relation(fields: [book_category_id], references: [id])
+    name             String       @db.VarChar(255)
+    author           String       @db.VarChar(100)
+    price            Decimal      @db.Decimal(10, 2)
+    description      String       @db.VarChar(255)
+
+    sale_details SaleDetail[]
+
+    created_at DateTime @default(now())
+    updated_at DateTime @default(now())
+
+    @@map("book")
+}
+
+model Customer {
+    id           String       @id @unique @default(uuid()) @map("id") @db.VarChar(36)
+    name         String       @db.VarChar(50)
+    phone        String       @unique @db.VarChar(13)
+    email        String       @db.VarChar(100)
+    address      String       @db.VarChar(255)
+    sales        Sale[]
+    sale_records SaleRecord[]
+
+    created_at DateTime @default(now())
+    updated_at DateTime @default(now())
+
+    @@map("customer")
+}
+
+model Sale {
+    id             String   @id @unique @default(uuid()) @map("id") @db.VarChar(36)
+    customer_id    String   @db.VarChar(36)
+    customer       Customer @relation(fields: [customer_id], references: [id])
+    total_discount Decimal  @db.Decimal(10, 2)
+    total_amount   Decimal  @db.Decimal(10, 2)
+    paid_amount    Decimal  @db.Decimal(10, 2)
+    due_amount     Decimal  @db.Decimal(10, 2)
+    user_id        String   @db.VarChar(36)
+    user           User     @relation(fields: [user_id], references: [id])
+
+    sale_details SaleDetail[]
+
+    sale_records SaleRecord[]
+
+    created_at DateTime @default(now())
+    updated_at DateTime @default(now())
+
+    @@map("sale")
+}
+
+model SaleDetail {
+    id            String       @id @unique @default(uuid()) @map("id") @db.VarChar(36)
+    sale_id       String       @db.VarChar(36)
+    sale          Sale         @relation(fields: [sale_id], references: [id])
+    book_id       String       @db.VarChar(36)
+    book          Book         @relation(fields: [book_id], references: [id])
+    qty           Int          @db.Int()
+    price         Decimal      @db.Decimal(10, 2)
+    discount_type DiscountType @default(no)
+    discount      Decimal      @db.Decimal(10, 2)
+
+    created_at DateTime @default(now())
+    updated_at DateTime @default(now())
+    User       User?    @relation(fields: [userId], references: [id])
+    userId     String?  @db.VarChar(36)
+
+    @@map("sale_detail")
+}
+
+model SaleRecord {
+    id             String    @id @unique @default(uuid()) @map("id") @db.VarChar(36)
+    sale_id        String    @db.VarChar(36)
+    sale           Sale      @relation(fields: [sale_id], references: [id])
+    customer_id    String?   @db.VarChar(36)
+    customer       Customer? @relation(fields: [customer_id], references: [id])
+    customer_name  String?   @db.VarChar(50)
+    customer_phone String?   @db.VarChar(13)
+    paid_amount    Decimal   @db.Decimal(10, 2)
+    user_id        String    @db.VarChar(36)
+    user           User      @relation(fields: [user_id], references: [id])
+
+    created_at DateTime @default(now())
+    updated_at DateTime @default(now())
+
+    @@map("sale_record")
+}
